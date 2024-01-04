@@ -1,73 +1,115 @@
 #include <iostream>
+#include <ctime>
+#include <cstdlib>
+#define N 8
 
-using namespace std;
+static int dx[N] = {1, 1, 2, 2, -1, -1, -2, -2};
+static int dy[N] = {2, -2, 1, -1, 2, -2, 1, -1};
 
-int Matrix[8][8]={0};
-int x[8]={2, 1, -1, -2, -2, -1, 1, 2};
-int y[8]={1, 2, 2, 1, -1, -2, -2, -1};
-int contor=0;
-
-int este_valid(int i, int j)
+bool esteInLimita(int x, int y)
 {
-     if(i >= 0 && i < 8 && j >= 0 && j < 8 && Matrix[i][j]==0)
-        return 1;
-    return 0;
+    return ((x >= 0 && y >= 0) && (x < N && y < N));
 }
 
-int este_valid_urm(int i, int j)
-{   
-    for(int k=0; k<8; k++)
-        {
-            int poz_i=i+x[k];
-            int poz_j=j+y[k];
-            if(este_valid(poz_i, poz_j))
-                return 1;
-        }
-    return 0;
+bool esteGol(int tabla[N][N], int x, int y)
+{
+    return (esteInLimita(x, y)) && (tabla[y][x] < 0);
 }
 
-void afisare_matrice()
+int numarVeciniGoi(int tabla[N][N], int x, int y)
 {
-    for (int i = 0; i < 8; i++)
+    int count = 0;
+    for (int i = 0; i < N; ++i)
+        if (esteGol(tabla, (x + dx[i]), (y + dy[i])))
+            count++;
+
+    return count;
+}
+
+bool mutareUrmatoare(int tabla[N][N], int *x, int *y)
+{
+    int min_deg_index = -1;
+    int min_deg = (N + 1);
+    int c, nx, ny;
+    int start = rand() % N;
+    
+    for (int count = 0; count < N; ++count)
     {
-        cout << "|";
-        for (int j = 0; j < 8; j++)
-            cout << Matrix[i][j] << "|";
-        cout << "\n";
-    }
-    cout<<"\n\n\n";
-}
-
-int knights_tour(int m, int n, int contor)
-{
-    int i;
-
-    for(i=0; i<8; i++)
-    {
-        if(contor >= 65)
-            return 1;
-
-        int poz_i=m+x[i];
-        int poz_j=n+y[i];
-        if(este_valid(poz_i, poz_j))
+        int i = (start + count) % N;
+        nx = *x + dx[i];
+        ny = *y + dy[i];
+        if ((esteGol(tabla, nx, ny)) && (c = numarVeciniGoi(tabla, nx, ny)) < min_deg)
         {
-            Matrix[poz_i][poz_j]=contor;
-            afisare_matrice();
-            if(knights_tour(poz_i, poz_j, contor+1))
-                {
-                    return 1;
-                }
-            Matrix[poz_i][poz_j]=0;
+            min_deg_index = i;
+            min_deg = c;
         }
     }
-    return 0;
+
+    if (min_deg_index == -1)
+        return false;
+
+    nx = *x + dx[min_deg_index];
+    ny = *y + dy[min_deg_index];
+
+    tabla[ny][nx] = tabla[(*y)][(*x)] + 1;
+
+    *x = nx;
+    *y = ny;
+
+    return true;
 }
 
+void afiseaza(int tabla[N][N])
+{
+    for (int i = 0; i < N; ++i)
+    {
+        for (int j = 0; j < N; ++j)
+            printf("%d\t", tabla[j][i]);
+        printf("\n");
+    }
+}
 
+bool vecin(int x, int y, int xx, int yy)
+{
+    for (int i = 0; i < N; ++i)
+        if (((x + dx[i]) == xx) && ((y + dy[i]) == yy))
+            return true;
+
+    return false;
+}
+
+bool gasesteTurInchis()
+{
+    int tabla[N][N];
+    for (int i = 0; i < N; ++i)
+        for (int j = 0; j < N; ++j)
+            tabla[i][j] = -1;
+
+    int xInitial = rand() % N;
+    int yInitial = rand() % N;
+
+    int x = xInitial, y = yInitial;
+    tabla[y][x] = 1;
+
+    for (int i = 0; i < N * N - 1; ++i)
+        if (mutareUrmatoare(tabla, &x, &y) == 0)
+            return false;
+
+    if (!vecin(x, y, xInitial, yInitial))
+        return false;
+
+    afiseaza(tabla);
+    return true;
+}
 
 int main()
 {
-    knights_tour(3, 3, 0);
+    srand(time(NULL));
+
+    while (!gasesteTurInchis())
+    {
+        ;
+    }
 
     return 0;
 }
